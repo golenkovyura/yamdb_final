@@ -3,15 +3,15 @@ services:
   db:
     image: postgres:13.0-alpine
     volumes:
-      - /var/lib/postgresql/data/
+      -  db_data: /var/lib/postgresql/data/
     env_file:
       - ./.env
   web:
-    image: earlinn/api_yamdb:v.02.07.2022
+    image: speedhash/yamdb_final:latest
     restart: always
     volumes:
       - static_value:/app/static/
-      - media_value:/app/media/
+      - media_value:/app/media/ 
     depends_on:
       - db
     env_file:
@@ -29,3 +29,4 @@ services:
 volumes:
   static_value:
   media_value:
+  db_data:
