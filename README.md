@@ -18,3 +18,103 @@
 
 Стек: Python 3.7, Django, DRF, Simple-JWT, PostgreSQL, Docker, nginx, gunicorn, 
 GitHub Actions (CI/CD).
+
+### Локальный запуск приложения в контейнерах
+
+_Важно: при работе в Linux или через терминал WSL2 все команды нужно выполнять от суперпользователя — начинайте каждую команду с sudo._
+
+Клонировать репозиторий и перейти в корневую папку:
+```
+git clone git@github.com:golenkovyura/yamdb_final.git
+cd yamdb_final
+```
+
+Перейти в папку yamdb_final/infra и создать в ней файл .env с 
+переменными окружения, необходимыми для работы приложения.
+```
+cd infra/
+```
+
+Пример содержимого файла:
+```
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
+SECRET_KEY=key
+EMAIL=insert_your_email@yandex.ru
+PASSWORD=your_email_password
+```
+
+Запустить docker-compose: 
+```
+docker-compose up -d
+```
+Будут созданы и запущены в фоновом режиме необходимые для работы приложения 
+контейнеры (db, web, nginx).
+
+Внутри контейнера web выполнить миграции, создать 
+суперпользователя и собрать статику:
+```
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py createsuperuser
+docker-compose exec web python manage.py collectstatic --no-input 
+```
+После этого проект должен быть доступен по адресу http://localhost/. 
+
+### Заполнение базы данных
+
+Файл с резервной копией базы данных находится по адресу 
+yamdb_final/api_yamdb/fixtures.json
+Для заполнения базы данных данными из него нужно выполнить команду:
+```
+docker-compose exec web python manage.py loaddata fixtures.json
+```
+
+Можно также зайти на на http://localhost/admin/, авторизоваться от имени 
+суперпользователя и внести записи в базу данных через админку.
+
+Новую резервную копию базы данных можно создать командой
+```
+docker-compose exec web python manage.py dumpdata > fixtures.json 
+```
+
+### Остановка контейнеров
+
+Для остановки работы приложения можно набрать в терминале команду Ctrl+C 
+либо открыть второй терминал и воспользоваться командой
+```
+docker-compose stop 
+```
+Также можно запустить контейнеры без их создания заново командой
+```
+docker-compose start 
+```
+
+### Документация в формате Redoc:
+
+Чтобы посмотреть документацию API в формате Redoc, нужно локально запустить 
+проект и перейти на страницу http://localhost/redoc/
+
+### Запуск с другим IP
+
+Заменить IP-адрес в infra/nginx/default.conf, на Github в разделе 
+settings/secrets/actions (переменная HOST), а также в последней строке 
+данного README и файле settings.py (если там указан IP).
+
+Зайти на сервер и остановить службу nginx командой:
+```
+sudo systemctl stop nginx 
+```
+Обновить на сервере файлы docker-compose.yml и nginx/default.conf, если в них 
+были изменения. Для этого нужно в терминале локального компьютера (не сервера) 
+выполнить команды:
+```
+scp -r /{имя диска}/{путь к папке}/yamdb_final/infra/docker-compose.yml {имя пользователя}@{публичный IPv4}:~/ # копирует файл docker-compose.yml в домашнюю директорию на сервере
+scp -r /{имя диска}/{путь к папке}/yamdb_final/infra/nginx/default.conf {имя пользователя}@{публичный IPv4}:/home/{имя пользователя}/nginx/ # копирует файл default.conf в папку /nginx/ домашней директории на сервере
+```
+
+Сделать коммит, зайти на вкладку Actions репозитория на GitHub и проверить, 
+что workflow запустился и выполнил все jobs.
