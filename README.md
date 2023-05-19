@@ -1,7 +1,5 @@
 # yamdb_final (API YaMDb)
 
-![yamdb_final workflow](https://github.com/earlinn/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg)
-
 ## _API интернет-сервиса YaMDB для хранения рецензий на произведения_
 
 ### Описание проекта API YaMDB:
